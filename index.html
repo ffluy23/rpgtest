@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Tilemap RPG Test</title>
+<title>Tilemap RPG</title>
 
 <style>
 body{
@@ -13,8 +13,8 @@ display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
-color:white;
 font-family:sans-serif;
+color:white;
 }
 
 canvas{
@@ -24,10 +24,11 @@ border:2px solid white;
 
 #dialog{
 position:absolute;
-bottom:40px;
+bottom:30px;
+width:400px;
 background:black;
 border:2px solid white;
-padding:10px;
+padding:12px;
 display:none;
 }
 </style>
@@ -45,6 +46,9 @@ const canvas = document.getElementById("game")
 const ctx = canvas.getContext("2d")
 const dialogBox = document.getElementById("dialog")
 
+canvas.width = 640
+canvas.height = 480
+
 const tileSize = 32
 
 let mapData
@@ -52,8 +56,7 @@ let mapWidth
 let mapHeight
 let layer
 
-const tileset = new Image()
-tileset.src = "tilemap_grayscale.png"
+const camera = { x:0, y:0 }
 
 const player = {
 x:100,
@@ -63,39 +66,48 @@ speed:2
 }
 
 const npc = {
-x:300,
+x:400,
 y:200,
 size:24,
-text:"안녕! 테스트 NPC야 👋"
+dialog:[
+"안녕!",
+"이건 테스트 NPC야.",
+"SPACE로 대화를 넘길 수 있어."
+]
 }
+
+let dialogIndex = 0
+let talking = false
 
 const keys = {}
 
 document.addEventListener("keydown", e=>{
+
 keys[e.key.toLowerCase()] = true
 
 if(e.code === "Space"){
-checkNPC()
+handleSpace()
 }
+
 })
 
 document.addEventListener("keyup", e=>{
 keys[e.key.toLowerCase()] = false
 })
 
-tileset.onload = () => {
+const tileset = new Image()
+tileset.src = "tilemap_grayscale.png"
+
+tileset.onload = ()=>{
 
 fetch("2untitled.json")
-.then(res => res.json())
-.then(map => {
+.then(r=>r.json())
+.then(map=>{
 
 mapData = map
 mapWidth = map.width
 mapHeight = map.height
 layer = map.layers[0].data
-
-canvas.width = mapWidth * tileSize
-canvas.height = mapHeight * tileSize
 
 gameLoop()
 
@@ -114,10 +126,23 @@ requestAnimationFrame(gameLoop)
 
 function update(){
 
-if(keys["w"]) player.y -= player.speed
-if(keys["s"]) player.y += player.speed
-if(keys["a"]) player.x -= player.speed
-if(keys["d"]) player.x += player.speed
+if(talking) return
+
+let nextX = player.x
+let nextY = player.y
+
+if(keys["w"]) nextY -= player.speed
+if(keys["s"]) nextY += player.speed
+if(keys["a"]) nextX -= player.speed
+if(keys["d"]) nextX += player.speed
+
+if(!isColliding(nextX,nextY)){
+player.x = nextX
+player.y = nextY
+}
+
+camera.x = player.x - canvas.width/2
+camera.y = player.y - canvas.height/2
 
 }
 
@@ -135,28 +160,27 @@ function drawMap(){
 
 const tilesPerRow = tileset.width / tileSize
 
-for(let i = 0; i < layer.length; i++){
+for(let i=0;i<layer.length;i++){
 
 const tile = layer[i]
 
 if(tile === 0) continue
 
-const x = (i % mapWidth) * tileSize
-const y = Math.floor(i / mapWidth) * tileSize
+const worldX = (i % mapWidth) * tileSize
+const worldY = Math.floor(i / mapWidth) * tileSize
 
-const sx = ((tile - 1) % tilesPerRow) * tileSize
-const sy = Math.floor((tile - 1) / tilesPerRow) * tileSize
+const screenX = worldX - camera.x
+const screenY = worldY - camera.y
+
+const sx = ((tile-1)%tilesPerRow)*tileSize
+const sy = Math.floor((tile-1)/tilesPerRow)*tileSize
 
 ctx.drawImage(
 tileset,
-sx,
-sy,
-tileSize,
-tileSize,
-x,
-y,
-tileSize,
-tileSize
+sx,sy,
+tileSize,tileSize,
+screenX,screenY,
+tileSize,tileSize
 )
 
 }
@@ -165,33 +189,77 @@ tileSize
 
 function drawPlayer(){
 
-ctx.fillStyle = "cyan"
-ctx.fillRect(player.x, player.y, player.size, player.size)
+ctx.fillStyle="cyan"
+
+ctx.fillRect(
+player.x-camera.x,
+player.y-camera.y,
+player.size,
+player.size
+)
 
 }
 
 function drawNPC(){
 
-ctx.fillStyle = "orange"
-ctx.fillRect(npc.x, npc.y, npc.size, npc.size)
+ctx.fillStyle="orange"
+
+ctx.fillRect(
+npc.x-camera.x,
+npc.y-camera.y,
+npc.size,
+npc.size
+)
 
 }
 
-function checkNPC(){
+function isColliding(x,y){
+
+const tileX = Math.floor(x / tileSize)
+const tileY = Math.floor(y / tileSize)
+
+const index = tileY * mapWidth + tileX
+
+const tile = layer[index]
+
+if(tile === 1){
+return true
+}
+
+return false
+
+}
+
+function handleSpace(){
+
+if(talking){
+
+dialogIndex++
+
+if(dialogIndex >= npc.dialog.length){
+
+dialogBox.style.display="none"
+talking=false
+dialogIndex=0
+return
+
+}
+
+dialogBox.innerText = npc.dialog[dialogIndex]
+return
+
+}
 
 const dx = player.x - npc.x
 const dy = player.y - npc.y
 
 const dist = Math.sqrt(dx*dx + dy*dy)
 
-if(dist < 40){
+if(dist < 50){
 
-dialogBox.style.display = "block"
-dialogBox.innerText = npc.text
-
-}else{
-
-dialogBox.style.display = "none"
+talking=true
+dialogBox.style.display="block"
+dialogBox.innerText = npc.dialog[0]
 
 }
 
