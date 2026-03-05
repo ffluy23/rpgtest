@@ -81,7 +81,7 @@ const keys = {}
 
 document.addEventListener("keydown", e=>{
 
-keys[e.key.toLowerCase()] = true
+keys[e.code] = true
 
 if(e.code === "Space"){
 handleSpace()
@@ -90,7 +90,7 @@ handleSpace()
 })
 
 document.addEventListener("keyup", e=>{
-keys[e.key.toLowerCase()] = false
+keys[e.code] = false
 })
 
 const tileset = new Image()
