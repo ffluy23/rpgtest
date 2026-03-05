@@ -80,8 +80,12 @@ let talking = false
 const keys = {}
 
 document.addEventListener("keydown", e=>{
-
 keys[e.code] = true
+})
+
+document.addEventListener("keyup", e=>{
+keys[e.code] = false
+})
 
 if(e.code === "Space"){
 handleSpace()
@@ -129,10 +133,10 @@ if(talking) return
 let nextX = player.x
 let nextY = player.y
 
-if(keys["w"]) nextY -= player.speed
-if(keys["s"]) nextY += player.speed
-if(keys["a"]) nextX -= player.speed
-if(keys["d"]) nextX += player.speed
+if(keys["KeyW"]) nextY -= player.speed
+if(keys["KeyS"]) nextY += player.speed
+if(keys["KeyA"]) nextX -= player.speed
+if(keys["KeyD"]) nextX += player.speed
 
 if(!isColliding(nextX,nextY)){
 player.x = nextX
