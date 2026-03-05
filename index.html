@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tilemap Test</title>
+
+<style>
+body{
+margin:0;
+background:black;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+canvas{
+image-rendering: pixelated;
+}
+</style>
+
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<script>
+
+const canvas = document.getElementById("game")
+const ctx = canvas.getContext("2d")
+
+const tileSize = 32
+
+const tileset = new Image()
+tileset.src = "tiles.png"
+
+tileset.onload = () => {
+
+fetch("map.json")
+.then(res => res.json())
+.then(map => {
+
+const mapWidth = map.width
+const mapHeight = map.height
+const layer = map.layers[0].data
+
+canvas.width = mapWidth * tileSize
+canvas.height = mapHeight * tileSize
+
+const tilesPerRow = tileset.width / tileSize
+
+for(let i = 0; i < layer.length; i++){
+
+const tile = layer[i]
+
+if(tile === 0) continue
+
+const x = (i % mapWidth) * tileSize
+const y = Math.floor(i / mapWidth) * tileSize
+
+const sx = ((tile - 1) % tilesPerRow) * tileSize
+const sy = Math.floor((tile - 1) / tilesPerRow) * tileSize
+
+ctx.drawImage(
+tileset,
+sx,
+sy,
+tileSize,
+tileSize,
+x,
+y,
+tileSize,
+tileSize
+)
+
+}
+
+})
+
+}
+
+</script>
+
+</body>
+</html>
