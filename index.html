@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Tilemap Test</title>
+<title>Tilemap RPG Test</title>
 
 <style>
 body{
@@ -13,9 +13,22 @@ display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
+color:white;
+font-family:sans-serif;
 }
+
 canvas{
 image-rendering: pixelated;
+border:2px solid white;
+}
+
+#dialog{
+position:absolute;
+bottom:40px;
+background:black;
+border:2px solid white;
+padding:10px;
+display:none;
 }
 </style>
 
@@ -24,15 +37,51 @@ image-rendering: pixelated;
 
 <canvas id="game"></canvas>
 
+<div id="dialog"></div>
+
 <script>
 
 const canvas = document.getElementById("game")
 const ctx = canvas.getContext("2d")
+const dialogBox = document.getElementById("dialog")
 
 const tileSize = 32
 
+let mapData
+let mapWidth
+let mapHeight
+let layer
+
 const tileset = new Image()
 tileset.src = "tilemap_grayscale.png"
+
+const player = {
+x:100,
+y:100,
+size:24,
+speed:2
+}
+
+const npc = {
+x:300,
+y:200,
+size:24,
+text:"안녕! 테스트 NPC야 👋"
+}
+
+const keys = {}
+
+document.addEventListener("keydown", e=>{
+keys[e.key.toLowerCase()] = true
+
+if(e.code === "Space"){
+checkNPC()
+}
+})
+
+document.addEventListener("keyup", e=>{
+keys[e.key.toLowerCase()] = false
+})
 
 tileset.onload = () => {
 
@@ -40,12 +89,49 @@ fetch("2untitled.json")
 .then(res => res.json())
 .then(map => {
 
-const mapWidth = map.width
-const mapHeight = map.height
-const layer = map.layers[0].data
+mapData = map
+mapWidth = map.width
+mapHeight = map.height
+layer = map.layers[0].data
 
 canvas.width = mapWidth * tileSize
 canvas.height = mapHeight * tileSize
+
+gameLoop()
+
+})
+
+}
+
+function gameLoop(){
+
+update()
+draw()
+
+requestAnimationFrame(gameLoop)
+
+}
+
+function update(){
+
+if(keys["w"]) player.y -= player.speed
+if(keys["s"]) player.y += player.speed
+if(keys["a"]) player.x -= player.speed
+if(keys["d"]) player.x += player.speed
+
+}
+
+function draw(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height)
+
+drawMap()
+drawNPC()
+drawPlayer()
+
+}
+
+function drawMap(){
 
 const tilesPerRow = tileset.width / tileSize
 
@@ -75,7 +161,39 @@ tileSize
 
 }
 
-})
+}
+
+function drawPlayer(){
+
+ctx.fillStyle = "cyan"
+ctx.fillRect(player.x, player.y, player.size, player.size)
+
+}
+
+function drawNPC(){
+
+ctx.fillStyle = "orange"
+ctx.fillRect(npc.x, npc.y, npc.size, npc.size)
+
+}
+
+function checkNPC(){
+
+const dx = player.x - npc.x
+const dy = player.y - npc.y
+
+const dist = Math.sqrt(dx*dx + dy*dy)
+
+if(dist < 40){
+
+dialogBox.style.display = "block"
+dialogBox.innerText = npc.text
+
+}else{
+
+dialogBox.style.display = "none"
+
+}
 
 }
 
