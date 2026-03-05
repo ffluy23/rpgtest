@@ -80,11 +80,14 @@ let talking = false
 const keys = {}
 
 document.addEventListener("keydown", e=>{
-keys[e.code] = true
 
 if(e.code === "Space"){
+e.preventDefault()
 handleSpace()
 }
+
+keys[e.code] = true
+
 })
 
 document.addEventListener("keyup", e=>{
